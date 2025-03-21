@@ -1,0 +1,48 @@
+version: '3.8'
+services:
+  fastapi-service:
+    build:
+      context: fastapi
+      dockerfile: ./Dockerfile
+    container_name: fastapi-app
+    ports:
+      - "8888:8888"
+    environment:
+      - LOG_LEVEL=INFO
+    networks:
+      - fastapi-network
+    command: ["uvicorn", "--reload", "main:app", "--host", "0.0.0.0", "--port", "8888"]
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - fastapi-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - fastapi-network
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    environment:
+      - COLLECTOR_ZIPKIN_HTTP_PORT=9411
+    ports:
+      - "16686:16686"
+      - "14268:14268"
+      - "14250:14250"
+    networks:
+      - fastapi-network
+
+networks:
+  fastapi-network:
+    driver: bridge
